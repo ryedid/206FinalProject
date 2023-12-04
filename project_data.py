@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 import json
 import os
 
+list_of_us_cities = ["Aspen-Colorado", "Austin-Texas", "Chattanooga-Tennessee", "Portland-Oregon", "Boulder-Colorado", "Fort-Lauderdale-Florida", "Milwaukee-Wisconsin", "Buffalo-New-York", "District-of-Columbia", "Charlotte-North-Carolina", "Cincinnatti-Ohio", "New-York-New-York", "Columbus-Ohio", "Denver-Colorado", "Chicago-Illinois", "El-Paso-Texas", "Fort-Worth-Texas", "Salt-Lake-City-Utah", "Omaha-Nebraska", "Houston-Texas", "Boston-Massachusetts", "Philadelphia-Pennsylvania", "Indianapolis-Indiana", "Madison-Wisconsin", "Los-Angeles-California", "Minneapolis-Minnesota", "San-Antonio-Texas", "Long-Beach-California", "Atlanta-Georgia", "Des-Moines-Iowa", "Greenville-South-Carolina", "San-Francisco-California", "Las-Vegas-Nevada", "Oklahoma-City-Oklahoma", "Miami-Florida", "Tucson-Arizona", "Park-City-Utah", "Richmond-Virginia", "Honolulu-Hawaii", "Kailua-Kona-Hawaii"]
+
 def get_city_bike_data():
     """
     Fetches data from the City Bike API.
