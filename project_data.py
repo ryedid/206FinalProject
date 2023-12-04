@@ -4,8 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import os
-
-list_of_us_cities = ["Aspen-Colorado", "Austin-Texas", "Chattanooga-Tennessee", "Portland-Oregon", "Boulder-Colorado", "Fort-Lauderdale-Florida", "Milwaukee-Wisconsin", "Buffalo-New-York", "District-of-Columbia", "Charlotte-North-Carolina", "Cincinnatti-Ohio", "New-York-New-York", "Columbus-Ohio", "Denver-Colorado", "Chicago-Illinois", "El-Paso-Texas", "Fort-Worth-Texas", "Salt-Lake-City-Utah", "Omaha-Nebraska", "Houston-Texas", "Boston-Massachusetts", "Philadelphia-Pennsylvania", "Indianapolis-Indiana", "Madison-Wisconsin", "Los-Angeles-California", "Minneapolis-Minnesota", "San-Antonio-Texas", "Long-Beach-California", "Atlanta-Georgia", "Des-Moines-Iowa", "Greenville-South-Carolina", "San-Francisco-California", "Las-Vegas-Nevada", "Oklahoma-City-Oklahoma", "Miami-Florida", "Tucson-Arizona", "Park-City-Utah", "Richmond-Virginia", "Honolulu-Hawaii", "Kailua-Kona-Hawaii"]
+import sqlite3
 
 def get_city_bike_data():
     """
@@ -20,7 +19,7 @@ def get_city_bike_data():
     # Replace 'YOUR_API_KEY' with your actual API key
     base_url = "https://api.citybik.es/v2/"
     # endpoint = "networks"
-    endpoint = "networks/velib"
+    endpoint = "networks"
     url = f"{base_url}{endpoint}"
 
     # Include your API key in the headers
@@ -51,6 +50,69 @@ def load_json(data):
     with open(filename, 'w') as json_file:
         json.dump(data, json_file, indent=2)
 # Replace 'YOUR_API_KEY' with your actual City Bike API key
+
+
+
+def set_up_database():
+    """
+    Sets up a SQLite database connection and cursor.
+
+    Parameters
+    -----------------------
+    db_name: str
+        The name of the SQLite database.
+
+    Returns
+    -----------------------
+    Tuple (Cursor, Connection):
+        A tuple containing the database cursor and connection objects.
+    """
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path + "/" + "proj_base")
+    cur = conn.cursor()
+    return cur, conn
+'''
+def make_SQL(cur, conn): 
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS BikeCities (city TEXT PRIMARY KEY, latitude TEXT, longitude TEXT)"
+    )
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    filename = dir_path + '/' + "citybike.json"
+    with open(filename, 'r') as json_file:
+        data = json.load(json_file)
+    real_data = data['networks']
+    for item in real_data:
+        if item['location']['country'] == "US":
+            cur.execute(
+            "INSERT OR IGNORE INTO BikeCities (city,latitude,longitude) VALUES (?,?,?)", (item['location']['city'], item['location']['latitude'],item['location']['longitude'])
+        )
+    conn.commit()
+'''
+def make_SQL(cur, conn):
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS BikeCities (city TEXT PRIMARY KEY, latitude TEXT, longitude TEXT)"
+    )
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    filename = dir_path + '/' + "citybike.json"
+    with open(filename, 'r') as json_file:
+        data = json.load(json_file)
+        
+    real_data = data.get('networks', [])  # Use .get to handle missing 'networks' key
+    for item in real_data:
+        location = item.get('location', {})
+        country = location.get('country', '')
+        if country == "US":
+            cur.execute(
+                "INSERT OR IGNORE INTO BikeCities (city,latitude,longitude) VALUES (?,?,?)",
+                (location.get('city', ''), location.get('latitude', ''), location.get('longitude', ''))
+            )
+    conn.commit()
+
+    # city_list = []
+
+
 city_bike_data = get_city_bike_data()
 
 # Print the retrieved data
@@ -58,5 +120,7 @@ if city_bike_data:
     print(city_bike_data)
 
 load_json(city_bike_data)
+cur, conn = set_up_database()
+make_SQL(cur, conn)
 
 
