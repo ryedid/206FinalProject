@@ -11,7 +11,7 @@ def get_coordinates_from_database(database_path, cur, conn):
     cur = conn.cursor()
 
     # Execute a query to retrieve all coordinates
-    cur.execute("SELECT longitude, latitude FROM BikeCities")  # Replace 'your_table_name' with the actual table name
+    cur.execute("SELECT city, longitude, latitude FROM BikeCities")  # Replace 'your_table_name' with the actual table name
 
     # Fetch all rows from the result set
     rows = cur.fetchall()
@@ -26,7 +26,7 @@ def get_links(coordinates):
         base_url = "https://api.weather.gov/"
         # endpoint = "networks"
         endpoint = "points"
-        url = f"{base_url}{endpoint}/{coords[1]},{coords[0]}"
+        url = f"{base_url}{endpoint}/{coords[2]},{coords[1]}"
         #print(url)
 
         # Include your API key in the headers
@@ -91,12 +91,16 @@ def load_json(data):
 
 def make_SQL(cur, conn, links):
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS WeatherCities (city INTEGER, latitude INTEGER, longitude INTEGER, date TEXT, hour TEXT, temp INTEGER, precip INTEGER, humidity INTEGER, wind TEXT, short TEXT)"
+        "CREATE TABLE IF NOT EXISTS WeatherCities (city TEXT, latitude TEXT, longitude TEXT, date TEXT, hour TEXT, temp INTEGER, precip INTEGER, humidity INTEGER, wind TEXT, short TEXT)"
     )
 
-    city = 1
-    latitude = 2
-    longitude = 3
+    city_and_coords = get_coordinates_from_database("proj_base", cur, conn)
+
+    # city = 1
+    # latitude = 2
+    # longitude = 3
+
+    city_index = -1
     
     for link in links:
         #print(links)
@@ -109,10 +113,15 @@ def make_SQL(cur, conn, links):
         real_data = hourly_data.get('properties', {})
         real_real_data = real_data.get('periods', [])
 
+        city_index += 1
+
         for item in real_real_data:
-            city+=1
-            latitude+=1
-            longitude+=1
+            # city+=1
+            # latitude+=1
+            # longitude+=1
+            city = city_and_coords[city_index][0]
+            latitude = city_and_coords[city_index][2]
+            longitude = city_and_coords[city_index][1]
             date = item.get('startTime', '')
             date = date[0:10]
             hour = item.get('startTime', '')
