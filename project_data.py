@@ -116,8 +116,8 @@ def make_SQL(cur, conn):
 city_bike_data = get_city_bike_data()
 
 # Print the retrieved data
-if city_bike_data:
-    print(city_bike_data)
+#if city_bike_data:
+    #print(city_bike_data)
 
 load_json(city_bike_data)
 cur, conn = set_up_database()
