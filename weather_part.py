@@ -22,15 +22,14 @@ def get_coordinates_from_database(database_path, cur, conn):
 def get_links(coordinates):
     links = []
     for coords in coordinates:
-        # Replace 'YOUR_API_KEY' with your actual API key
+        
         base_url = "https://api.weather.gov/"
         # endpoint = "networks"
         endpoint = "points"
-        url = f"{base_url}{endpoint}/{coords[2]},{coords[1]}"
-        #print(url)
+        if coords[1] and coords[2]:
+            url = f"{base_url}{endpoint}/{coords[2]},{coords[1]}"
+        # print(url)
 
-        # Include your API key in the headers
-        # headers = {"Authorization": f"Bearer {api_key}"}
 
         try:
             # Make a GET request to the API
@@ -57,11 +56,8 @@ def get_links(coordinates):
 
 def get_new_data(url):
 
-    # Replace 'YOUR_API_KEY' with your actual API key
-    base_url = url
 
-    # Include your API key in the headers
-    # headers = {"Authorization": f"Bearer {api_key}"}
+    base_url = url
 
     try:
         # Make a GET request to the API
@@ -110,8 +106,9 @@ def make_SQL(cur, conn, links):
         # response = requests.get(hourly_data)
         # data = response.json()
         #print(data)
-        real_data = hourly_data.get('properties', {})
-        real_real_data = real_data.get('periods', [])
+        if hourly_data:
+            real_data = hourly_data.get('properties', {})
+            real_real_data = real_data.get('periods', [])
 
         city_index += 1
 
@@ -143,9 +140,7 @@ def make_SQL(cur, conn, links):
                 #print(city, latitude, longitude, date, hour, temp, precip, humidity, wind, short)
 
     conn.commit()
-# Replace 'YOUR_API_KEY' with your actual City Bike API key
 
-# Example usage:
 database_path = "proj_base"
 
 conn = sqlite3.connect(database_path)
@@ -153,8 +148,7 @@ conn = sqlite3.connect(database_path)
 cur = conn.cursor()
 # Replace with the actual path to your SQLite database
 coordinates = get_coordinates_from_database(database_path, cur, conn)
+# print(coordinates)
 links = get_links(coordinates)
 make_SQL(cur, conn, links)
 
-# Display the result
-#print(coordinates)
