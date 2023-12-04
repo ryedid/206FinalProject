@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 def fetch_weather_data_from_db(database_path):
     conn = sqlite3.connect(database_path)
-    query = "SELECT city, date, hour, temp FROM WeatherCities"
+    query = "SELECT city, date, hour, temp FROM WeatherCities LIMIT 200"
     df = pd.read_sql_query(query, conn)
     conn.close()
     return df
