@@ -140,7 +140,7 @@ def make_SQL(cur, conn, links):
                     "INSERT OR IGNORE INTO WeatherCities (city,latitude,longitude,date,hour,temp,precip,humidity,wind,short) VALUES (?,?,?,?,?,?,?,?,?,?)",
                     (city, latitude, longitude, date, hour, temp, precip, humidity, wind, short)
                 )
-                print(city, latitude, longitude, date, hour, temp, precip, humidity, wind, short)
+                #print(city, latitude, longitude, date, hour, temp, precip, humidity, wind, short)
 
     conn.commit()
 # Replace 'YOUR_API_KEY' with your actual City Bike API key
