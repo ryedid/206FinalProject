@@ -1,119 +1,63 @@
-
 import requests
-# import my_key
-from bs4 import BeautifulSoup
 import json
 import os
 import sqlite3
 
-def get_city_bike_data():
-    """
-    Fetches data from the City Bike API.
+def get_coordinates_from_database(database_path, cur, conn):
+    # Connect to the SQLite database
+    conn = sqlite3.connect(database_path)
 
-    Parameters:
-    - api_key (str): Your City Bike API key.
-
-    Returns:
-    - dict: Parsed JSON response from the API.
-    """
-    # Replace 'YOUR_API_KEY' with your actual API key
-    base_url = "https://api.citybik.es/v2/"
-    # endpoint = "networks"
-    endpoint = "networks"
-    url = f"{base_url}{endpoint}"
-
-    # Include your API key in the headers
-    # headers = {"Authorization": f"Bearer {api_key}"}
-
-    try:
-        # Make a GET request to the API
-        response = requests.get(url)
-
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200:
-            # Parse the JSON response
-            data = response.json()
-            return data
-        else:
-            # Print an error message if the request was not successful
-            print(f"Error: {response.status_code} - {response.text}")
-            return None
-
-    except requests.exceptions.RequestException as e:
-        # Handle any exceptions that may occur during the request
-        print(f"Error: {e}")
-        return None
-
-def load_json(data):
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    filename = dir_path + '/' + "citybike.json"
-    with open(filename, 'w') as json_file:
-        json.dump(data, json_file, indent=2)
-# Replace 'YOUR_API_KEY' with your actual City Bike API key
-
-
-
-def set_up_database():
-    """
-    Sets up a SQLite database connection and cursor.
-
-    Parameters
-    -----------------------
-    db_name: str
-        The name of the SQLite database.
-
-    Returns
-    -----------------------
-    Tuple (Cursor, Connection):
-        A tuple containing the database cursor and connection objects.
-    """
-    path = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(path + "/" + "proj_base")
+    # Create a cursor object to execute SQL queries
     cur = conn.cursor()
-    return cur, conn
-'''
-def make_SQL(cur, conn): 
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS BikeCities (city TEXT PRIMARY KEY, latitude TEXT, longitude TEXT)"
-    )
 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    filename = dir_path + '/' + "citybike.json"
-    with open(filename, 'r') as json_file:
-        data = json.load(json_file)
-    real_data = data['networks']
-    for item in real_data:
-        if item['location']['country'] == "US":
-            cur.execute(
-            "INSERT OR IGNORE INTO BikeCities (city,latitude,longitude) VALUES (?,?,?)", (item['location']['city'], item['location']['latitude'],item['location']['longitude'])
-        )
-    conn.commit()
-'''
+    # Execute a query to retrieve all coordinates
+    cur.execute("SELECT city, longitude, latitude FROM BikeCities")  # Replace 'your_table_name' with the actual table name
 
-def get_list_of_ids():
-    ids = []
+    # Fetch all rows from the result set
+    rows = cur.fetchall()
 
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    filename = dir_path + '/' + "citybike.json"
-    with open(filename, 'r') as json_file:
-        data = json.load(json_file)
+    # Return the list of coordinates
+    return rows
+
+def get_links(coordinates):
+    links = []
+    for coords in coordinates:
         
-    real_data = data.get('networks', [])  # Use .get to handle missing 'networks' key
-    for item in real_data:
-        location = item.get('location', {})
-        country = location.get('country', '')
-        if country == "US":
-            ids.append(item.get('id', ''))
+        base_url = "https://api.weather.gov/"
+        # endpoint = "networks"
+        endpoint = "points"
+        if coords[1] and coords[2]:
+            url = f"{base_url}{endpoint}/{coords[2]},{coords[1]}"
+        # print(url)
 
-    return ids
+
+        try:
+            # Make a GET request to the API
+            response = requests.get(url)
+
+            # Check if the request was successful (status code 200)
+            if response.status_code == 200:
+                # Parse the JSON response
+                data = response.json()
+                props = data.get('properties', {})
+                link = props.get('forecastHourly', '')
+                links.append(link)
+            else:
+                # Print an error message if the request was not successful
+                print(f"Error: {response.status_code} - {response.text}")
+                return None
+
+        except requests.exceptions.RequestException as e:
+            # Handle any exceptions that may occur during the request
+            print(f"Error: {e}")
+            return None
+        
+    return links
 
 def get_new_data(url):
 
-    # Replace 'YOUR_API_KEY' with your actual API key
-    base_url = url
 
-    # Include your API key in the headers
-    # headers = {"Authorization": f"Bearer {api_key}"}
+    base_url = url
 
     try:
         # Make a GET request to the API
@@ -134,50 +78,77 @@ def get_new_data(url):
         print(f"Error: {e}")
         return None
 
-def make_SQL(cur, conn):
+def load_json(data):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    filename = dir_path + '/' + "weather.json"
+    with open(filename, 'w') as json_file:
+        json.dump(data, json_file, indent=2)
+
+
+def make_SQL(cur, conn, links):
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS BikeCities (city TEXT PRIMARY KEY, latitude TEXT, longitude TEXT, free_bikes INTEGER, empty_slots INTEGER)"
+        "CREATE TABLE IF NOT EXISTS WeatherCities (city TEXT, latitude TEXT, longitude TEXT, date TEXT, hour TEXT, temp INTEGER, precip INTEGER, humidity INTEGER, wind TEXT, short TEXT)"
     )
 
-    ids = get_list_of_ids()
+    city_and_coords = get_coordinates_from_database("proj_base", cur, conn)
 
-    for id in ids:
-        base_url = "https://api.citybik.es/v2/"
-        # endpoint = "networks"
-        endpoint = "networks"
-        url = f"{base_url}{endpoint}/{id}"
-        curr_data = get_new_data(url)
-        load_json(curr_data)
-        real_data = curr_data.get('network', {})
-        location = real_data.get('location', {})
-        city = location.get('city', '')
-        latitude = location.get('latitude', '')
-        longitude = location.get('longitude', '')
-        stations = real_data.get('stations', [])
-        amt_free_bikes = 0
-        amt_empty_slots = 0
-        for item in stations:
-            free_bikes = item["free_bikes"]
-            amt_free_bikes += free_bikes
-            empty_slots = item["empty_slots"]
-            amt_empty_slots += empty_slots
-        cur.execute(
-            "INSERT OR IGNORE INTO BikeCities (city,latitude,longitude,free_bikes,empty_slots) VALUES (?,?,?,?,?)",
-            (city, latitude, longitude, amt_free_bikes, amt_empty_slots)
-        )
-        conn.commit()
+    # city = 1
+    # latitude = 2
+    # longitude = 3
 
-    # city_list = []
+    city_index = -1
+    
+    for link in links:
+        #print(links)
+        hourly_data = get_new_data(link)
+        load_json(hourly_data)
+        #print(data)
+        # response = requests.get(hourly_data)
+        # data = response.json()
+        #print(data)
+        if hourly_data:
+            real_data = hourly_data.get('properties', {})
+            real_real_data = real_data.get('periods', [])
 
+        city_index += 1
 
-city_bike_data = get_city_bike_data()
+        for item in real_real_data:
+            # city+=1
+            # latitude+=1
+            # longitude+=1
+            city = city_and_coords[city_index][0]
+            latitude = city_and_coords[city_index][2]
+            longitude = city_and_coords[city_index][1]
+            date = item.get('startTime', '')
+            date = date[0:10]
+            hour = item.get('startTime', '')
+            hour = hour[11:16]
+            #print(hour)
+            temp = item["temperature"]
+            prob = item.get('probabilityOfPrecipitation', {})
+            precip = prob.get('value', '')
+            rel = item.get('relativeHumidity', {})
+            humidity = rel.get('value', '')
+            wind = item.get('windSpeed', '')
+            short = item.get('shortForecast', '')
+            if hour == "08:00" or hour == "14:00" or hour == "20:00":
+                #print("made it here")
+                cur.execute(
+                    "INSERT OR IGNORE INTO WeatherCities (city,latitude,longitude,date,hour,temp,precip,humidity,wind,short) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (city, latitude, longitude, date, hour, temp, precip, humidity, wind, short)
+                )
+                #print(city, latitude, longitude, date, hour, temp, precip, humidity, wind, short)
 
-# Print the retrieved data
-#if city_bike_data:
-    #print(city_bike_data)
+    conn.commit()
 
-load_json(city_bike_data)
-cur, conn = set_up_database()
-make_SQL(cur, conn)
+database_path = "proj_base"
 
+conn = sqlite3.connect(database_path)
+# Create a cursor object to execute SQL queries
+cur = conn.cursor()
+# Replace with the actual path to your SQLite database
+coordinates = get_coordinates_from_database(database_path, cur, conn)
+# print(coordinates)
+links = get_links(coordinates)
+make_SQL(cur, conn, links)
 
