@@ -38,7 +38,7 @@ def scrape_city(city):
    soup = BeautifulSoup(response.text, 'html.parser')
    healthTag = soup.find('section', id='health-nutrition')
    if healthTag == None:
-       return (city,"N/A","N/A","N/A")
+       return (city,0,0,0)
    # all health graphs
    healthGraphTags = healthTag.find_all('div', class_='hgraph')
    for tag in healthGraphTags:
@@ -88,6 +88,9 @@ def make_SQL(data_list, cur, conn):
         
 
     conn.commit()    
+
+
+
 conn = sqlite3.connect("proj_base")
 # Create a cursor object to execute SQL queries
 cur = conn.cursor()
