@@ -41,10 +41,29 @@ def plot_bikes_precip_scatter(df):
     plt.ylabel('Number of Free Bikes')
     plt.show()
 
+def fetch_health_bike_data(database_path):
+    conn = sqlite3.connect(database_path)
+    # Select necessary columns from both tables and perform a join
+    query = """
+        SELECT bc.city, h.Gen_Health, bc.free_bikes
+        FROM CityHealth h
+        JOIN BikeCities bc ON h.city = bc.city
+    """
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
+def plot_bikes_health_scatter(df):
+    plt.scatter(df['Gen_Health'], df['free_bikes'])
+    plt.title('Number of Free Bikes vs Generally Healthy People By City')
+    plt.xlabel('General Health (%)')
+    plt.ylabel('Number of Free Bikes')
+    plt.show()
 
 weather_data = fetch_weather_data_from_db("proj_base")
 # Plot temperature trends by city
 plot_temperature_by_city(weather_data)
 weather_bike_data = fetch_weather_bike_data("proj_base")
 plot_bikes_precip_scatter(weather_bike_data)
+health_bike_data = fetch_health_bike_data("proj_base")
+plot_bikes_health_scatter(health_bike_data)
 
