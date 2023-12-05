@@ -97,6 +97,9 @@ def make_SQL(cur, conn, links):
     # longitude = 3
 
     city_index = -1
+    num_inserted = 0
+
+    #print(links)
     
     for link in links:
         #print(links)
@@ -131,12 +134,23 @@ def make_SQL(cur, conn, links):
             humidity = rel.get('value', '')
             wind = item.get('windSpeed', '')
             short = item.get('shortForecast', '')
-            if hour == "08:00" or hour == "14:00" or hour == "20:00":
-                #print("made it here")
+            if (hour == "08:00" or hour == "14:00" or hour == "20:00") and num_inserted < 25:
+                # Check if the item is already in the database before attempting to insert
                 cur.execute(
-                    "INSERT OR IGNORE INTO WeatherCities (city,latitude,longitude,date,hour,temp,precip,humidity,wind,short) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    "SELECT COUNT(*) FROM WeatherCities WHERE city=? AND latitude=? AND longitude=? AND date=? AND hour=? AND temp=? AND precip=? AND humidity=? AND wind=? AND short=?",
                     (city, latitude, longitude, date, hour, temp, precip, humidity, wind, short)
                 )
+                if cur.fetchone()[0] == 0:
+                    # Item is not in the database, insert it
+                    cur.execute(
+                        "INSERT INTO WeatherCities (city,latitude,longitude,date,hour,temp,precip,humidity,wind,short) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                        (city, latitude, longitude, date, hour, temp, precip, humidity, wind, short)
+                    )
+                    if cur.rowcount > 0:
+                        num_inserted += 1
+            elif num_inserted >= 25:
+                conn.commit() 
+                break
                 #print(city, latitude, longitude, date, hour, temp, precip, humidity, wind, short)
 
     conn.commit()
@@ -150,5 +164,5 @@ cur = conn.cursor()
 coordinates = get_coordinates_from_database(database_path, cur, conn)
 # print(coordinates)
 links = get_links(coordinates)
-make_SQL(cur, conn, links)
-
+for i in range(0,32):
+    make_SQL(cur, conn, links)
