@@ -164,5 +164,4 @@ cur = conn.cursor()
 coordinates = get_coordinates_from_database(database_path, cur, conn)
 # print(coordinates)
 links = get_links(coordinates)
-for i in range(0,32):
-    make_SQL(cur, conn, links)
+make_SQL(cur, conn, links)
