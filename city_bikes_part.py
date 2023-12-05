@@ -1,4 +1,6 @@
+
 import requests
+# import my_key
 from bs4 import BeautifulSoup
 import json
 import os
@@ -14,11 +16,14 @@ def get_city_bike_data():
     Returns:
     - dict: Parsed JSON response from the API.
     """
+    # Replace 'YOUR_API_KEY' with your actual API key
     base_url = "https://api.citybik.es/v2/"
     # endpoint = "networks"
     endpoint = "networks"
     url = f"{base_url}{endpoint}"
 
+    # Include your API key in the headers
+    # headers = {"Authorization": f"Bearer {api_key}"}
 
     try:
         # Make a GET request to the API
@@ -44,6 +49,7 @@ def load_json(data):
     filename = dir_path + '/' + "citybike.json"
     with open(filename, 'w') as json_file:
         json.dump(data, json_file, indent=2)
+# Replace 'YOUR_API_KEY' with your actual City Bike API key
 
 
 
@@ -103,8 +109,11 @@ def get_list_of_ids():
 
 def get_new_data(url):
 
+    # Replace 'YOUR_API_KEY' with your actual API key
     base_url = url
 
+    # Include your API key in the headers
+    # headers = {"Authorization": f"Bearer {api_key}"}
 
     try:
         # Make a GET request to the API
@@ -131,7 +140,7 @@ def make_SQL(cur, conn):
     )
 
     ids = get_list_of_ids()
-
+    num_inserted = 0
     for id in ids:
         base_url = "https://api.citybik.es/v2/"
         # endpoint = "networks"
@@ -152,11 +161,24 @@ def make_SQL(cur, conn):
             amt_free_bikes += free_bikes
             empty_slots = item["empty_slots"]
             amt_empty_slots += empty_slots
-        cur.execute(
-            "INSERT OR IGNORE INTO BikeCities (city,latitude,longitude,free_bikes,empty_slots) VALUES (?,?,?,?,?)",
-            (city, latitude, longitude, amt_free_bikes, amt_empty_slots)
-        )
-        conn.commit()
+
+        if num_inserted < 25:
+            cur.execute(
+                "SELECT COUNT(*) FROM BikeCities WHERE city=? AND latitude=? AND longitude=? AND free_bikes=? AND empty_slots=?",
+                (city, latitude, longitude, amt_free_bikes, amt_empty_slots)
+            )
+            if cur.fetchone()[0] == 0:
+                # Item is not in the database, insert it
+                cur.execute(
+                    "INSERT INTO BikeCities (city,latitude,longitude,free_bikes,empty_slots) VALUES (?,?,?,?,?)",
+                    (city, latitude, longitude, amt_free_bikes, amt_empty_slots)
+                )
+                if cur.rowcount > 0:
+                    num_inserted += 1
+        elif num_inserted >= 25:
+            conn.commit()
+            break
+    conn.commit()
 
     # city_list = []
 
@@ -170,3 +192,5 @@ city_bike_data = get_city_bike_data()
 load_json(city_bike_data)
 cur, conn = set_up_database()
 make_SQL(cur, conn)
+
+
