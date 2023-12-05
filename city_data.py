@@ -76,6 +76,64 @@ def make_SQL(data_list, cur, conn):
         cur.execute("INSERT OR IGNORE INTO CityHealth (city, Gen_Health, overweight, Feeling_Bad_About_Self) VALUES (?,?,?,?)",
                     (city_name,gen_health,overweight,feel_bad))
     conn.commit()    
+def normalize_db(cur, conn):
+    # Define the SQL command to update the city column
+    sql_command = """
+        UPDATE CityHealth
+        SET city = 
+            CASE 
+                WHEN city LIKE '%Salt-Lake-City-Utah' THEN (city, 'Salt-Lake-City-Utah', 'Salt Lake City')
+                WHEN city LIKE '%-Colorado' THEN REPLACE(city, '-Colorado', ',CO')
+                WHEN city LIKE '%-Antonio' THEN REPLACE(city, '-Antonio', ' Antonio')
+                WHEN city LIKE '%-Beach' THEN REPLACE(city, '-Beach', ' Beach')
+                WHEN city LIKE '%-Angeles' THEN REPLACE(city, '-Angeles', ' Angeles')
+                WHEN city LIKE '%-Texas' THEN REPLACE(city, '-Texas', ',TX')
+                WHEN city LIKE '%-Tennessee' THEN REPLACE(city, '-Tennessee', ',TN')
+                WHEN city LIKE '%-Oregon' THEN REPLACE(city, '-Oregon', ',OR')
+                WHEN city LIKE '%-Lauderdale' THEN REPLACE(city, '-Lauderdale', ' Lauderdale')
+                WHEN city LIKE '%-Florida' THEN REPLACE(city, '-Florida', ',FL')
+                WHEN city LIKE '%-Paso' THEN REPLACE(city, '-Paso', ' Paso')
+                WHEN city LIKE '%-Wisconsin' THEN REPLACE(city, '-Wisconsin', ',WI')
+                WHEN city LIKE '%-York' THEN REPLACE(city, '-York', ' York')
+                WHEN city LIKE '%-New-York' THEN REPLACE (city, '-New-York', ',NY')
+                WHEN city LIKE '%-Worth' THEN REPLACE (city, '-Worth', ' Worth') 
+                WHEN city LIKE '%-District-of-Columbia' THEN REPLACE(city, '-District-of-Columbia', ', DC')
+                WHEN city LIKE '%-North-Carolina' THEN REPLACE(city, '-North-Carolina', ',NC')
+                WHEN city LIKE '%-Ohio' THEN REPLACE(city, '-Ohio', ',OH')
+                WHEN city LIKE '%-Illinois' THEN REPLACE(city, '-Illinois', ',IL')
+                WHEN city LIKE '%-Nebraska' THEN REPLACE(city, '-Nebraska', ',NE')
+                WHEN city LIKE '%-Vegas' THEN REPLACE(city, '-Vegas', ' Vegas')
+                WHEN city LIKE '%-City' THEN REPLACE(city, '-City', ' City')
+                WHEN city LIKE '%-Massachusetts' THEN REPLACE(city, '-Massachusetts', ',MA')
+                WHEN city LIKE '%-Pennsylvania' THEN REPLACE(city, '-Pennsylvania', ',PA')
+                WHEN city LIKE '%-Indiana' THEN REPLACE(city, '-Indiana', ',IN')
+                WHEN city LIKE '%San-Francisco' THEN REPLACE(city, 'San-Frencisco', 'San Francisco Bay Area')
+                WHEN city LIKE '%-California' THEN REPLACE(city, '-California', ',CA')
+                WHEN city LIKE '%-Minnesota' THEN REPLACE(city, '-Minnesota', ',MN')
+                WHEN city LIKE '%-Virginia' THEN REPLACE(city, '-Virginia', ',VA')
+                WHEN city LIKE '%-Georgia' THEN REPLACE(city, '-Georgia', ',GA')
+                WHEN city LIKE '%-Iowa' THEN REPLACE(city, '-Iowa', ',IA')
+                WHEN city LIKE '%-South-Carolina' THEN REPLACE(city, '-South-Carolina', ',SC')
+                WHEN city LIKE '%-Bay-Area' THEN REPLACE(city, '-Bay-Area', ' Bay Area')
+                WHEN city LIKE '%-Nevada' THEN REPLACE(city, '-Nevada', ',NV')
+                WHEN city LIKE '%-Oklahoma' THEN REPLACE(city, '-Oklahoma', ',OK')
+                WHEN city LIKE '%-Arizona' THEN REPLACE(city, '-Arizona', ',AZ')
+                WHEN city LIKE '%-Hawaii' THEN REPLACE(city, '-Hawaii', '')
+                WHEN city LIKE '%Kailua' THEN REPLACE(city, 'Kailua', 'Kailua-Kona')
+
+                ELSE city
+            END;
+    """
+    try:
+        # Execute the SQL command
+        cur.execute(sql_command)
+        # Commit the changes to the database
+        conn.commit()
+        print("Normalization completed successfully!")
+    except Exception as e:
+        # Rollback changes if there's an error
+        conn.rollback()
+        print(f"Error during normalization: {str(e)}")
 
 
 
@@ -84,5 +142,6 @@ conn = sqlite3.connect("proj_base")
 cur = conn.cursor()
 data = make_tup_list(list_of_us_cities)
 make_SQL(data, cur, conn)
+normalize_db(cur,conn)
 # scrape_city('Boston-Massachusetts')
 # print(scrape_city('Boston-Massachusetts'))
