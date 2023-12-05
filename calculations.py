@@ -68,6 +68,7 @@ def normalize_state(cur, conn):
                 WHEN city LIKE '%-Oklahoma' THEN REPLACE(city, '-Oklahoma', ', OK')
                 WHEN city LIKE '%-Arizona' THEN REPLACE(city, '-Arizona', ', AZ')
                 WHEN city LIKE '%-Hawaii' THEN REPLACE(city, '-Hawaii', '')
+                WHEN city LIKE 'Kailua' THEN 'Kailua-Kona'
                 ELSE city
             END;
     """
@@ -81,10 +82,129 @@ def normalize_state(cur, conn):
         # Rollback changes if there's an error
         conn.rollback()
         print(f"Error during normalization: {str(e)}")
+def calculate_bikes_bad(cur, conn):
+    sql_command = """
+        SELECT AVG(b.empty_slots), AVG(h.Feeling_Bad_About_Self), b.city FROM BikeCities b 
+        JOIN CityHealth h ON b.city = h.city
+        GROUP BY b.city
+    """
+    try:
+        # Execute the SQL command
+        cur.execute(sql_command)
+
+        # Fetch all rows from the result set
+        rows = cur.fetchall()
+
+        # Return the results
+        return rows
+    except Exception as e:
+        # Rollback changes if there's an error
+        conn.rollback()
+        print(f"Error during calculation: {str(e)}")
+        return None
+    
+def calculate_sunny(cur, conn):
+    sql_command = """
+        SELECT COUNT(b.empty_slots), b.city FROM BikeCities b 
+        JOIN WeatherCities w ON b.city = w.city
+        WHERE w.short = "Sunny"
+        GROUP BY b.city
+    """
+    try:
+        # Execute the SQL command
+        cur.execute(sql_command)
+
+        # Fetch all rows from the result set
+        rows = cur.fetchall()
+
+        # Return the results
+        return rows
+    except Exception as e:
+        # Rollback changes if there's an error
+        conn.rollback()
+        print(f"Error during calculation: {str(e)}")
+        return None
+      
+
+def calculate_bikes_genhealth(cur, conn):
+    sql_command = """
+        SELECT b.empty_slots, h.Gen_Health, b.city FROM BikeCities b 
+        JOIN CityHealth h ON b.city = h.city
+        GROUP BY b.city
+    """
+    try:
+        # Execute the SQL command
+        cur.execute(sql_command)
+
+        # Fetch all rows from the result set
+        rows = cur.fetchall()
+
+        # Return the results
+        return rows
+    except Exception as e:
+        # Rollback changes if there's an error
+        conn.rollback()
+        print(f"Error during calculation: {str(e)}")
+        return None
+    
+
+def write_results_to_file(results, output_file_path="output.txt"):
+    if results is not None:
+        try:
+            # Save the results to a text file
+            # with open(output_file_path, 'w') as output_file:
+            #     for row in results:
+            #         output_file.write(f"{row[0]}\t{row[1]}\t{row[2]}\n")
+            # Save the results to a text file
+            with open(output_file_path, 'w') as output_file:
+                for row in results:
+                    if len(row) >= 2:
+                        output_file.write(f"{row[0]}\t{row[1]}\n")
+                    else:
+                        print("Invalid row format:", row)
+
+        except Exception as e:
+            print(f"Error while writing to file: {str(e)}")
+
+def write_results_to_file_health(results, output_file_path="output.txt"):
+    if results is not None:
+        try:
+            # Save the results to a text file
+            with open(output_file_path, 'w') as output_file:
+                for row in results:
+                    output_file.write(f"{row[0]}\t{row[1]}\t{row[2]}\n")
+        except Exception as e:
+            print(f"Error while writing to file: {str(e)}")
+
+
+
+
+
 
 conn = sqlite3.connect("proj_base")
+
 # Create a cursor object to execute SQL queries
 cur = conn.cursor()
 
 normalize_city(cur, conn)
 normalize_state(cur, conn)
+normalize_city(cur, conn)
+
+#how many timeslots are sunny?
+results = calculate_sunny(cur, conn)
+
+# Write results to a file
+write_results_to_file(results, "sunny.txt")
+
+
+#how many empty slots are there in cities with the highest general health percentage?
+results = calculate_bikes_genhealth(cur, conn)
+
+# Write results to a file
+write_results_to_file_health(results, "health.txt")
+
+#how amny empty slots are there in cities where people feel bad about themselves?
+results = calculate_bikes_bad(cur, conn)
+
+# Write results to a file
+write_results_to_file(results, "bad.txt")
