@@ -85,3 +85,6 @@ def normalize_state(cur, conn):
 conn = sqlite3.connect("proj_base")
 # Create a cursor object to execute SQL queries
 cur = conn.cursor()
+
+normalize_city(cur, conn)
+normalize_state(cur, conn)
