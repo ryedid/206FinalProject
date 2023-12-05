@@ -105,7 +105,7 @@ def calculate_bikes_bad(cur, conn):
     
 def calculate_sunny(cur, conn):
     sql_command = """
-        SELECT COUNT(b.empty_slots), b.city FROM BikeCities b 
+        SELECT b.empty_slots, b.city FROM BikeCities b 
         JOIN WeatherCities w ON b.city = w.city
         WHERE w.short = "Sunny"
         GROUP BY b.city
