@@ -192,5 +192,3 @@ city_bike_data = get_city_bike_data()
 load_json(city_bike_data)
 cur, conn = set_up_database()
 make_SQL(cur, conn)
-
-
