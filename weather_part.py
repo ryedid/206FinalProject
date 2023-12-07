@@ -2,6 +2,7 @@ import requests
 import json
 import os
 import sqlite3
+import re
 
 def get_coordinates_from_database(database_path, cur, conn):
     # Connect to the SQLite database
@@ -87,7 +88,7 @@ def load_json(data):
 
 def make_SQL(cur, conn, links):
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS WeatherCities (city TEXT, latitude TEXT, longitude TEXT, date TEXT, hour TEXT, temp INTEGER, precip INTEGER, humidity INTEGER, wind TEXT, short TEXT)"
+        "CREATE TABLE IF NOT EXISTS WeatherCities (city TEXT, latitude TEXT, longitude TEXT, date TEXT, hour TEXT, temp INTEGER, precip INTEGER, humidity INTEGER, wind FLOAT, short TEXT)"
     )
 
     city_and_coords = get_coordinates_from_database("proj_base", cur, conn)
@@ -132,7 +133,7 @@ def make_SQL(cur, conn, links):
             precip = prob.get('value', '')
             rel = item.get('relativeHumidity', {})
             humidity = rel.get('value', '')
-            wind = item.get('windSpeed', '')
+            wind = item.get('windSpeed', '').rstrip(' mph')
             short = item.get('shortForecast', '')
             if (hour == "08:00" or hour == "14:00" or hour == "20:00") and num_inserted < 25:
                 # Check if the item is already in the database before attempting to insert
