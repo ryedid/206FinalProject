@@ -74,7 +74,7 @@ def set_up_database():
 '''
 def make_SQL(cur, conn): 
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS BikeCities (city TEXT PRIMARY KEY, latitude TEXT, longitude TEXT)"
+        "CREATE TABLE IF NOT EXISTS BikeCities (city TEXT, latitude TEXT, longitude TEXT)"
     )
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -136,7 +136,7 @@ def get_new_data(url):
 
 def make_SQL(cur, conn):
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS BikeCities (city TEXT PRIMARY KEY, latitude TEXT, longitude TEXT, free_bikes INTEGER, empty_slots INTEGER)"
+        "CREATE TABLE IF NOT EXISTS BikeCities (city TEXT, latitude TEXT, longitude TEXT, free_bikes INTEGER, empty_slots INTEGER)"
     )
 
     ids = get_list_of_ids()
@@ -179,6 +179,8 @@ def make_SQL(cur, conn):
             conn.commit()
             break
     conn.commit()
+
+    
 
     # city_list = []
 
