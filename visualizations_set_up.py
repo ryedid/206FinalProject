@@ -66,4 +66,3 @@ weather_bike_data = fetch_weather_bike_data("proj_base")
 plot_bikes_precip_scatter(weather_bike_data)
 health_bike_data = fetch_health_bike_data("proj_base")
 plot_bikes_health_scatter(health_bike_data)
-
