@@ -66,12 +66,11 @@ def make_tup_list(city_list):
 
 def make_SQL(data_list, cur, conn):
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS CityHealth (city TEXT UNIQUE, Gen_Health FLOAT, overweight FLOAT, Feeling_Bad_About_Self FLOAT)"
+        "CREATE TABLE IF NOT EXISTS CityHealth (city TEXT, Gen_Health FLOAT, overweight FLOAT, Feeling_Bad_About_Self FLOAT)"
     )
     count = 0
     for city in data_list:
         if count < 25:
-            
             city_name = city[0]
             gen_health = city[1]
             overweight = city[2]
