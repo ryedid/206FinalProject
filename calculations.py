@@ -82,6 +82,90 @@ def normalize_state(cur, conn):
         # Rollback changes if there's an error
         conn.rollback()
         print(f"Error during normalization: {str(e)}")
+
+
+def create_city_index(cur, conn):
+    unique_cities = [
+        "Aspen, CO", "Austin, TX", "Chattanooga, TN",
+        "Portland, OR", "Boulder, CO", "Fort Lauderdale, FL",
+        "Milwaukee, WI", "Buffalo, NY", "Washington, DC",
+        "Charlotte, NC", "Cincinnati, OH", "New York, NY",
+        "Columbus, OH", "Denver, CO", "Chicago, IL",
+        "El Paso, TX", "Fort Worth, TX", "Salt Lake City",
+        "Omaha, NE", "", "Boston, MA", "Philadelphia, PA",
+        "Indianapolis, IN", "Madison, WI", "Los Angeles, CA",
+        "Houston, TX", "Minneapolis, MN", "San Antonio, TX",
+        "Long Beach, CA", "Atlanta, GA", "Des Moines, IA",
+        "Greenville, SC", "San Francisco Bay Area, CA",
+        "Las Vegas, NV", "Oklahoma, OK", "Miami, FL",
+        "Tucson, AZ", "Park City, UT", "Richmond, VA",
+        "Honolulu", "Kailua-Kona"
+    ]
+    unique_cities = list(set(unique_cities))  # Removing duplicates
+    
+    cur.execute('''CREATE TABLE IF NOT EXISTS CityIndex (
+                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    City TEXT
+                )''')
+
+    for city in unique_cities:
+        cur.execute('''INSERT INTO CityIndex (City) VALUES (?)''', (city,))
+
+    conn.commit()
+
+def update_bike_cities(cur, conn):
+    cur.execute('''ALTER TABLE BikeCities ADD COLUMN city_id INTEGER''')
+    cur.execute('''SELECT City, ID FROM CityIndex''')
+    city_index = dict(cur.fetchall())
+
+    cur.execute('''SELECT city FROM BikeCities''')
+    cities = cur.fetchall()
+
+    for city in cities:
+        city_name = city[0]
+        city_id = city_index.get(city_name)
+
+        if city_id is not None:
+            cur.execute('''UPDATE BikeCities SET city_id = ? WHERE city = ?''', (city_id, city_name))
+    cur.execute('''ALTER TABLE BikeCities DROP COLUMN city''')
+    conn.commit()
+
+def update_city_health(cur, conn):
+    cur.execute('''ALTER TABLE CityHealth ADD COLUMN city_id INTEGER''')
+    cur.execute('''SELECT City, ID FROM CityIndex''')
+    city_index = dict(cur.fetchall())
+
+    cur.execute('''SELECT city FROM CityHealth''')
+    cities = cur.fetchall()
+
+    for city in cities:
+        city_name = city[0]
+        city_id = city_index.get(city_name)
+
+        if city_id is not None:
+            cur.execute('''UPDATE CityHealth SET city_id = ? WHERE city = ?''', (city_id, city_name))
+    cur.execute('''ALTER TABLE CityHealth DROP COLUMN city''')
+    conn.commit()
+
+def update_city_weather(cur, conn):
+    cur.execute('''ALTER TABLE WeatherCities ADD COLUMN city_id INTEGER''')
+    cur.execute('''SELECT City, ID FROM CityIndex''')
+    city_index = dict(cur.fetchall())
+
+    cur.execute('''SELECT city FROM WeatherCities''')
+    cities = cur.fetchall()
+
+    for city in cities:
+        city_name = city[0]
+        city_id = city_index.get(city_name)
+
+        if city_id is not None:
+            cur.execute('''UPDATE WeatherCities SET city_id = ? WHERE city = ?''', (city_id, city_name))
+    cur.execute('''ALTER TABLE WeatherCities DROP COLUMN city''')
+
+    conn.commit()
+
+#Calculations
 def calculate_bikes_bad(cur, conn):
     sql_command = """
         SELECT AVG(b.empty_slots), AVG(h.Feeling_Bad_About_Self), b.city FROM BikeCities b 
@@ -151,11 +235,6 @@ def calculate_bikes_genhealth(cur, conn):
 def write_results_to_file(results, output_file_path="output.txt"):
     if results is not None:
         try:
-            # Save the results to a text file
-            # with open(output_file_path, 'w') as output_file:
-            #     for row in results:
-            #         output_file.write(f"{row[0]}\t{row[1]}\t{row[2]}\n")
-            # Save the results to a text file
             with open(output_file_path, 'w') as output_file:
                 for row in results:
                     if len(row) >= 2:
@@ -189,8 +268,11 @@ cur = conn.cursor()
 normalize_city(cur, conn)
 normalize_state(cur, conn)
 normalize_city(cur, conn)
+# create_city_index(cur, conn)
+# update_bike_cities(cur,conn)
+update_city_health(cur,conn)
 
-#how many timeslots are sunny?
+#how many empty slots are sunny?
 results = calculate_sunny(cur, conn)
 
 # Write results to a file
@@ -203,7 +285,7 @@ results = calculate_bikes_genhealth(cur, conn)
 # Write results to a file
 write_results_to_file_health(results, "health.txt")
 
-#how amny empty slots are there in cities where people feel bad about themselves?
+#how many empty slots are there in cities where people feel bad about themselves?
 results = calculate_bikes_bad(cur, conn)
 
 # Write results to a file
