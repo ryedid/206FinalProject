@@ -136,11 +136,12 @@ def get_new_data(url):
 
 def make_SQL(cur, conn):
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS BikeCities (city TEXT, latitude TEXT, longitude TEXT, free_bikes INTEGER, empty_slots INTEGER)"
+        "CREATE TABLE IF NOT EXISTS BikeCities (city INTEGER, latitude TEXT, longitude TEXT, free_bikes INTEGER, empty_slots INTEGER)"
     )
 
     ids = get_list_of_ids()
     num_inserted = 0
+    city_num = 0
     for id in ids:
         base_url = "https://api.citybik.es/v2/"
         # endpoint = "networks"
@@ -150,7 +151,7 @@ def make_SQL(cur, conn):
         load_json(curr_data)
         real_data = curr_data.get('network', {})
         location = real_data.get('location', {})
-        city = location.get('city', '')
+        city = city_num
         latitude = location.get('latitude', '')
         longitude = location.get('longitude', '')
         stations = real_data.get('stations', [])
@@ -173,8 +174,11 @@ def make_SQL(cur, conn):
                     "INSERT INTO BikeCities (city,latitude,longitude,free_bikes,empty_slots) VALUES (?,?,?,?,?)",
                     (city, latitude, longitude, amt_free_bikes, amt_empty_slots)
                 )
+                city_num += 1
                 if cur.rowcount > 0:
                     num_inserted += 1
+            else:
+                city_num+=1
         elif num_inserted >= 25:
             conn.commit()
             break
