@@ -114,6 +114,34 @@ def create_city_index(cur, conn):
 
     conn.commit()
 
+def create_description_index(cur, conn):
+    unique_descriptions = [
+        "Mostly Cloudy", "Chance Snow Showers", "Partly Sunny",
+        "Mostly Sunny", "Partly Cloudy", "Sunny", "Mostly Clear",
+        "Chance Rain Showers", "Showers And Thunderstorms Likely",
+        "Showers And Thunderstorms", "Chance Showers And Thunderstorms",
+        "Slight Chance Rain Showers", "Slight Chance Light Rain",
+        "Chance Light Rain", "Light Rain Likely", "Cloudy",
+        "Slight Chance Light Snow", "Slight Chance Snow Showers",
+        "Slight Chance Rain And Snow Showers", "Clear",
+        "Chance Light Snow", "Rain Likely", "Chance Rain",
+        "Areas Of Fog", "Patchy Fog"
+    ]
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS DescriptionIndex (
+                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Description TEXT
+                )''')
+
+    for desc in unique_descriptions:
+        cur.execute('''INSERT INTO DescriptionIndex (Description) VALUES (?)''', (desc,))
+
+    cur.execute('''UPDATE DescriptionIndex SET Description = NULLIF(Description, '')''')
+    cur.execute('''DELETE FROM DescriptionIndex WHERE Description IS NULL''')
+
+    conn.commit()
+
+
 # def update_bike_cities(cur, conn):
 #     cur.execute('''ALTER TABLE BikeCities ADD COLUMN city_id INTEGER''')
 #     cur.execute('''SELECT City, ID FROM CityIndex''')
@@ -166,11 +194,29 @@ def create_city_index(cur, conn):
 
 #     conn.commit()
 
+def update_weather(cur, conn):
+    cur.execute('''ALTER TABLE WeatherCities ADD COLUMN short_id INTEGER''')
+    cur.execute('''SELECT Description, ID FROM DescriptionIndex''')
+    desc_index = dict(cur.fetchall())
+
+    cur.execute('''SELECT short FROM WeatherCities''')
+    descriptions = cur.fetchall()
+
+    for description in descriptions:
+        desc = description[0]
+        desc_id = desc_index.get(desc)
+
+        if desc_id is not None:
+            cur.execute('''UPDATE WeatherCities SET short_id = ? WHERE short = ?''', (desc_id, desc))
+    cur.execute('''ALTER TABLE BikeCities DROP COLUMN short''')
+    conn.commit()
+
 #Calculations
 def calculate_bikes_bad(cur, conn):
     sql_command = """
-        SELECT AVG(b.empty_slots), AVG(h.Feeling_Bad_About_Self), b.city FROM BikeCities b 
+        SELECT AVG(b.empty_slots), AVG(h.Feeling_Bad_About_Self), cid.City FROM BikeCities b 
         JOIN CityHealth h ON b.city = h.city
+        JOIN CityIndex cid ON b.city = cid.ID
         GROUP BY b.city
     """
     try:
@@ -190,9 +236,11 @@ def calculate_bikes_bad(cur, conn):
     
 def calculate_sunny(cur, conn):
     sql_command = """
-        SELECT b.empty_slots, b.city FROM BikeCities b 
+        SELECT b.empty_slots, cid.City FROM BikeCities b 
+        JOIN CityIndex cid ON b.city = cid.ID
         JOIN WeatherCities w ON b.city = w.city
-        WHERE w.short = "Sunny"
+        JOIN DescriptionIndex d ON d.ID = w.short_id
+        WHERE d.Description = "Sunny"
         GROUP BY b.city
     """
     try:
@@ -213,7 +261,8 @@ def calculate_sunny(cur, conn):
 
 def calculate_bikes_genhealth(cur, conn):
     sql_command = """
-        SELECT b.empty_slots, h.Gen_Health, b.city FROM BikeCities b 
+        SELECT b.empty_slots, h.Gen_Health, cid.City FROM BikeCities b 
+        JOIN CityIndex cid ON b.city = cid.ID        
         JOIN CityHealth h ON b.city = h.city
         GROUP BY b.city
     """
@@ -272,6 +321,8 @@ cur = conn.cursor()
 create_city_index(cur, conn)
 # update_bike_cities(cur,conn)
 # update_city_health(cur,conn)
+create_description_index(cur, conn)
+update_weather(cur, conn)
 
 #how many empty slots are sunny?
 results = calculate_sunny(cur, conn)
