@@ -38,7 +38,7 @@ def scrape_city(city):
    soup = BeautifulSoup(response.text, 'html.parser')
    healthTag = soup.find('section', id='health-nutrition')
    if healthTag == None:
-       return (city,0,0,0)
+       return (list_of_us_cities.index(city),0,0,0)
    # all health graphs
    healthGraphTags = healthTag.find_all('div', class_='hgraph')
    for tag in healthGraphTags:
@@ -53,7 +53,7 @@ def scrape_city(city):
             overweight_stat = tagstemp[1].text.rstrip('%')
     
    #print(overweight_stat)
-   return (city,gen_health_stat,overweight_stat,feeling_bad_stat)
+   return (list_of_us_cities.index(city),gen_health_stat,overweight_stat,feeling_bad_stat)
 
 
 def make_tup_list(city_list):
@@ -66,7 +66,7 @@ def make_tup_list(city_list):
 
 def make_SQL(data_list, cur, conn):
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS CityHealth (city TEXT, Gen_Health FLOAT, overweight FLOAT, Feeling_Bad_About_Self FLOAT)"
+        "CREATE TABLE IF NOT EXISTS CityHealth (city INTEGER UNIQUE, Gen_Health FLOAT, overweight FLOAT, Feeling_Bad_About_Self FLOAT)"
     )
     count = 0
     for city in data_list:
