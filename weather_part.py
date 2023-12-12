@@ -165,5 +165,5 @@ cur = conn.cursor()
 coordinates = get_coordinates_from_database(database_path, cur, conn)
 # print(coordinates)
 links = get_links(coordinates)
-# for i in range(32): #COMMENT THIS OUT!!!!!
-make_SQL(cur, conn, links)
+for i in range(32): #COMMENT THIS OUT!!!!!
+    make_SQL(cur, conn, links)
