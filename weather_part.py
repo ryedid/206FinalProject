@@ -87,7 +87,7 @@ def load_json(data):
 
 def make_SQL(cur, conn, links):
     cur.execute(
-        "CREATE TABLE IF NOT EXISTS WeatherCities (city TEXT, latitude TEXT, longitude TEXT, date TEXT, hour TEXT, temp INTEGER, precip INTEGER, humidity INTEGER, wind TEXT, short TEXT)"
+        "CREATE TABLE IF NOT EXISTS WeatherCities (city INTEGER, latitude TEXT, longitude TEXT, date TEXT, hour TEXT, temp INTEGER, precip INTEGER, humidity INTEGER, wind TEXT, short TEXT)"
     )
 
     city_and_coords = get_coordinates_from_database("proj_base", cur, conn)
@@ -119,7 +119,8 @@ def make_SQL(cur, conn, links):
             # city+=1
             # latitude+=1
             # longitude+=1
-            city = city_and_coords[city_index][0]
+            # city = city_and_coords[city_index][0]
+            city = city_index
             latitude = city_and_coords[city_index][2]
             longitude = city_and_coords[city_index][1]
             date = item.get('startTime', '')
@@ -164,5 +165,5 @@ cur = conn.cursor()
 coordinates = get_coordinates_from_database(database_path, cur, conn)
 # print(coordinates)
 links = get_links(coordinates)
-for i in range(32): #COMMENT THIS OUT!!!!!
-    make_SQL(cur, conn, links)
+# for i in range(32): #COMMENT THIS OUT!!!!!
+make_SQL(cur, conn, links)
