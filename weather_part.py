@@ -120,7 +120,7 @@ def make_SQL(cur, conn, links):
             # latitude+=1
             # longitude+=1
             # city = city_and_coords[city_index][0]
-            city = city_index
+            city = city_index + 1
             latitude = city_and_coords[city_index][2]
             longitude = city_and_coords[city_index][1]
             date = item.get('startTime', '')
