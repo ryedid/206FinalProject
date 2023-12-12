@@ -141,7 +141,7 @@ def make_SQL(cur, conn):
 
     ids = get_list_of_ids()
     num_inserted = 0
-    city_num = 0
+    city_num = 1
     for id in ids:
         base_url = "https://api.citybik.es/v2/"
         # endpoint = "networks"
