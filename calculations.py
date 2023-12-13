@@ -253,7 +253,6 @@ def calculate_sunny(cur, conn):
         # Return the results
         return rows
     except Exception as e:
-        # Rollback changes if there's an error
         conn.rollback()
         print(f"Error during calculation: {str(e)}")
         return None
@@ -276,7 +275,6 @@ def calculate_bikes_genhealth(cur, conn):
         # Return the results
         return rows
     except Exception as e:
-        # Rollback changes if there's an error
         conn.rollback()
         print(f"Error during calculation: {str(e)}")
         return None
