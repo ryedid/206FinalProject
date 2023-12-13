@@ -4,10 +4,8 @@ import os
 import sqlite3
 
 def get_coordinates_from_database(database_path, cur, conn):
-    # Connect to the SQLite database
     conn = sqlite3.connect(database_path)
 
-    # Create a cursor object to execute SQL queries
     cur = conn.cursor()
 
     # Execute a query to retrieve all coordinates
@@ -32,23 +30,18 @@ def get_links(coordinates):
 
 
         try:
-            # Make a GET request to the API
             response = requests.get(url)
 
-            # Check if the request was successful (status code 200)
             if response.status_code == 200:
-                # Parse the JSON response
                 data = response.json()
                 props = data.get('properties', {})
                 link = props.get('forecastHourly', '')
                 links.append(link)
             else:
-                # Print an error message if the request was not successful
                 print(f"Error: {response.status_code} - {response.text}")
                 return None
 
         except requests.exceptions.RequestException as e:
-            # Handle any exceptions that may occur during the request
             print(f"Error: {e}")
             return None
         
@@ -60,21 +53,16 @@ def get_new_data(url):
     base_url = url
 
     try:
-        # Make a GET request to the API
         response = requests.get(base_url)
 
-        # Check if the request was successful (status code 200)
         if response.status_code == 200:
-            # Parse the JSON response
             data = response.json()
             return data
         else:
-            # Print an error message if the request was not successful
             print(f"Error: {response.status_code} - {response.text}")
             return None
 
     except requests.exceptions.RequestException as e:
-        # Handle any exceptions that may occur during the request
         print(f"Error: {e}")
         return None
 
